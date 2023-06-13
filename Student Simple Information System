@@ -17,14 +17,15 @@ def tabmain():
     root.geometry("400x300")
 
     def tabstudent():
-
         root.geometry("1000x600")
         frame.destroy()
         frame1 = ctk.CTkFrame(master=root)
-        frame1.pack(pady=20, padx=20, fill="y", side="left")
-        frame2 = ttk.Frame(master=root)
-        frame2.pack(pady=20, padx=(0, 20), fill="both",
-                    expand=True, side="right")
+        frame1.pack(pady=20, fill="y", side="left")
+        frame2 = ctk.CTkFrame(master=root)
+        frame2.pack(pady=(0, 20), padx=(0, 20), fill="both",
+                    expand=True, side="bottom")
+        frame3 = ctk.CTkFrame(master=root, width=700)
+        frame3.pack(pady=(20, 0), fill="x", side="top")
 
         label1 = ctk.CTkLabel(
             master=frame1, text="Student Information", font=("Roboto", 20))
@@ -60,8 +61,7 @@ def tabmain():
 
         def update_treeview():
             # clear the tree view
-            for record in treeview.get_children():
-                treeview.delete(record)
+            treeview.delete(*treeview.get_children())
 
             # repopulate the tree view with the updated student information
             with open('students.txt', 'r') as f:
@@ -74,15 +74,15 @@ def tabmain():
             with open('students.txt', 'r') as f:
                 students = [line.strip().split(', ') for line in f.readlines()]
 
-            # find the index of the student to update
-            index = None
-            for i, student in enumerate(students):
+            # find the student to update
+            for student in students:
                 if student[0] == name:
-                    index = i
+                    # update the student's information
+                    student[1] = age
+                    student[2] = gpa
+                    student[3] = contact_number
+                    student[4] = course
                     break
-
-            # update the student's information
-            students[index] = [name, age, gpa, contact_number, course]
 
             # write all students back to file
             with open('students.txt', 'w') as f:
@@ -90,11 +90,7 @@ def tabmain():
                     f.write(', '.join(student) + '\n')
 
             # update the tree view with the new information
-            treeview.delete(*treeview.get_children())
-            with open('students.txt', 'r') as f:
-                for line in f.readlines():
-                    student = line.strip().split(', ')
-                    treeview.insert('', 'end', values=student)
+            update_treeview()
 
         def update_form():
             # get the selected student's information
@@ -108,16 +104,12 @@ def tabmain():
                 tkinter.messagebox.showerror(
                     "Error", "Please select a student to update.")
                 return
-            name, age, gpa, contact_number, course = values
-
-            # update the student's information with the new values
-            new_name = name_entry.get()
-            new_age = age_entry.get()
-            new_gpa = gpa_entry.get()
-            new_contact_number = contact_entry.get()
-            new_course = course_entry.get()
-            update_student(new_name, new_age, new_gpa,
-                           new_contact_number, new_course)
+            name = values[0]
+            age = age_entry.get()
+            gpa = gpa_entry.get()
+            contact_number = contact_entry.get()
+            course = course_entry.get()
+            update_student(name, age, gpa, contact_number, course)
 
             # clear the form fields
             name_entry.delete(0, ctk.END)
@@ -130,7 +122,7 @@ def tabmain():
             selected_item = treeview.focus()
             if selected_item:
                 student_info = treeview.item(selected_item, 'values')
-                name, age, gpa, contact_number, course = student_info
+                name = student_info[0]
 
                 # open the file and read its contents
                 with open('students.txt', 'r') as f:
@@ -148,6 +140,29 @@ def tabmain():
 
                 # remove the selected item from the treeview
                 treeview.delete(selected_item)
+
+        def perform_search():
+            search_query = search_entry.get().lower()
+            search_results = []
+
+            # Search through the students' information
+            with open('students.txt', 'r') as f:
+                for line in f.readlines():
+                    student_info = line.strip().split(', ')
+                    if any(search_query in info.lower() for info in student_info):
+                        search_results.append(student_info)
+
+            # Clear the tree view
+            treeview.delete(*treeview.get_children())
+
+            # Display search results in the tree view
+            for idx, student_info in enumerate(search_results):
+                treeview.insert(parent='', index=idx, iid=idx,
+                                text=idx, values=student_info)
+
+        def clear_search():
+            search_entry.delete(0, ctk.END)
+            update_treeview()
 
         name_entry = ctk.CTkEntry(master=frame1, placeholder_text="Name")
         name_entry.pack(pady=12, padx=10)
@@ -173,16 +188,24 @@ def tabmain():
             master=frame1, text="Update Student", command=update_form)
         update_button.pack(pady=12, padx=10)
 
+        search_entry = ctk.CTkEntry(master=frame3, placeholder_text="Search")
+        search_entry.pack(pady=12, padx=10, side="left")
+
+        search_button = ctk.CTkButton(
+            master=frame3, text="Search", command=perform_search)
+        search_button.pack(pady=12, padx=10, side="left")
+
+        clear_button = ctk.CTkButton(
+            master=frame3, text="Clear Search", command=clear_search)
+        clear_button.pack(pady=12, padx=10, side="left")
+
         delete_button = ctk.CTkButton(
             master=frame1, text="Delete", command=delete_student)
         delete_button.pack(pady=12, padx=10)
 
         def show_selected_row(event):
-            # get the ID of the selected row
             selected_row_id = treeview.selection()[0]
-            # get the values of the columns in the selected row
             values = treeview.item(selected_row_id, 'values')
-            # display the values in the form fields
             name_entry.delete(0, ctk.END)
             name_entry.insert(0, values[0])
             age_entry.delete(0, ctk.END)
@@ -191,32 +214,26 @@ def tabmain():
             gpa_entry.insert(0, values[2])
             contact_entry.delete(0, ctk.END)
             contact_entry.insert(0, values[3])
-            course_entry.insert(0, values[4])
+            course_entry.set(values[4])
 
-        # create the treeview widget in frame2
         treeview = ttk.Treeview(master=frame2)
         treeview.pack(fill="both", expand=True)
 
-        # add columns to the treeview
         treeview["columns"] = ("name", "age", "gpa",
                                "contact_number", "course")
-
-        # define column headings
-        treeview.heading("#0", text="ID")
         treeview.heading("name", text="Name")
         treeview.heading("age", text="Age")
         treeview.heading("gpa", text="GPA")
         treeview.heading("contact_number", text="Contact Number")
         treeview.heading("course", text="Course")
-        treeview.column("#0", width=50)
-        treeview.column("name", width=150)
-        treeview.column("age", width=50)
+        treeview.column("#0", width=0)
+        treeview.column("name", width=200)
+        treeview.column("age", width=150)
         treeview.column("gpa", width=50)
         treeview.column("contact_number", width=150)
-        treeview.column("course", width=150)
+        treeview.column("course", width=200)
         treeview.bind('<<TreeviewSelect>>', show_selected_row)
 
-        # add data to the treeview
         with open('students.txt', 'r') as f:
             data = f.readlines()
             for idx, line in enumerate(data):
@@ -227,14 +244,14 @@ def tabmain():
         def back():
             frame1.destroy()
             frame2.destroy()
+            frame3.destroy()
             tabmain()
 
-        buttonback = ctk.CTkButton(
-            master=frame1, text="Back", command=back)
+        buttonback = ctk.CTkButton(master=frame1, text="Back", command=back)
         buttonback.pack(side="bottom", pady=10, padx=10)
 
     def tabcourse():
-        root.geometry("300x600")
+        root.geometry("350x600")
         frame.destroy()
         frame1 = ctk.CTkFrame(master=root)
         frame1.pack(pady=20, padx=40, fill="both", expand=True)
@@ -248,7 +265,7 @@ def tabmain():
             try:
                 with open("courses.txt", "r") as f:
                     course_list.extend([line.strip()
-                                       for line in f.readlines()])
+                                        for line in f.readlines()])
             except FileNotFoundError:
                 pass
 
@@ -292,6 +309,7 @@ def tabmain():
 
         course_listbox = tk.Listbox(master=frame1)
         course_listbox.pack(pady=12, padx=10)
+        course_listbox.config(width=25)
 
         delete_button = ctk.CTkButton(
             master=frame1, text="Delete Course", command=delete_course)
