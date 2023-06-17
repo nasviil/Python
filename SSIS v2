@@ -17,6 +17,8 @@ root.resizable(False, False)
 def tabmain():
     root.geometry("400x300")
 
+# ===========================================STUDENT TAB=============================================================
+
     def tabstudent():
         root.geometry("1000x600")
         frame.destroy()
@@ -39,6 +41,8 @@ def tabmain():
         cursor.execute('''CREATE TABLE IF NOT EXISTS students
                           (name TEXT, age TEXT, gpa TEXT, course TEXT)''')
         conn.commit()
+
+# --------------------------------------------FUNCTIONS---------------------------------------------------------
 
         def update_treeview():
             # Clear the tree view
@@ -126,6 +130,14 @@ def tabmain():
             search_entry.delete(0, ctk.END)
             update_treeview()
 
+        def back():
+            frame1.destroy()
+            frame2.destroy()
+            frame3.destroy()
+            tabmain()
+
+#-------------------------------------------BUTTONS AND ENTRIES---------------------------------------------------
+
         # Get data from courses tab
         cursor.execute("SELECT name FROM courses")
         course_names = [row[0] for row in cursor.fetchall()]
@@ -185,6 +197,11 @@ def tabmain():
             master=frame3, text="Clear Search", command=clear_search)
         clear_button.pack(pady=12, padx=10, side="left")
 
+        buttonback = ctk.CTkButton(master=frame1, text="Back", command=back)
+        buttonback.pack(side="bottom", pady=10, padx=10)
+
+#----------------------------------------TREEVIEW------------------------------------------------------
+
         def show_selected_row(event):
             selected_row_id = treeview.selection()[0]
             values = treeview.item(selected_row_id, 'values')
@@ -217,15 +234,6 @@ def tabmain():
         for idx, row in enumerate(rows):
             treeview.insert(parent="", index=idx,
                             iid=idx, text=idx, values=row)
-
-        def back():
-            frame1.destroy()
-            frame2.destroy()
-            frame3.destroy()
-            tabmain()
-
-        buttonback = ctk.CTkButton(master=frame1, text="Back", command=back)
-        buttonback.pack(side="bottom", pady=10, padx=10)
 
     def tabcourse():
         root.geometry("400x600")
