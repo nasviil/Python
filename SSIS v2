@@ -33,34 +33,12 @@ def tabmain():
         label1.pack(pady=(12, 24), padx=10)
 
         # Connect to the SQLite database
-        conn = sqlite3.connect('students.db')
+        conn = sqlite3.connect('studentmanagement.db')
         cursor = conn.cursor()
 
         cursor.execute('''CREATE TABLE IF NOT EXISTS students
                           (name TEXT, age TEXT, gpa TEXT, course TEXT)''')
         conn.commit()
-
-        def add_student(name, age, gpa, course):
-            # Insert student data into the database
-            cursor.execute(
-                "INSERT INTO students VALUES (?, ?, ?, ?)", (name, age, gpa, course))
-            conn.commit()
-
-        def submit_form():
-            name = name_entry.get()
-            age = year_entry.get()
-            gpa = gender_entry.get()
-            course = course_entry.get()
-
-            # Add the student to the database
-            add_student(name, age, gpa, course)
-
-            # Clear the form fields
-            name_entry.delete(0, ctk.END)
-            year_entry.delete(0, ctk.END)
-
-            # Update the tree view with the new student information
-            update_treeview()
 
         def update_treeview():
             # Clear the tree view
@@ -75,37 +53,41 @@ def tabmain():
                 treeview.insert(parent="", index=idx,
                                 iid=idx, text=idx, values=row)
 
-        def update_student(name, age, gpa, course):
-            # Update student information in the database
-            cursor.execute(
-                "UPDATE students SET age=?, gpa=?, course=? WHERE name=?", (age, gpa, course, name))
-            conn.commit()
-
-            # Update the tree view with the new information
-            update_treeview()
-
-        def update_form():
-            # Get the selected student's information
-            selected = treeview.selection()
-            if not selected:
-                tkinter.messagebox.showerror(
-                    "Error", "Please select a student to update.")
-                return
-            values = treeview.item(selected)['values']
-            if not values:
-                tkinter.messagebox.showerror(
-                    "Error", "Please select a student to update.")
-                return
-            name = values[0]
+        def add_student():
+            name = name_entry.get()
             age = year_entry.get()
             gpa = gender_entry.get()
             course = course_entry.get()
-            update_student(name, age, gpa, course)
+
+            # Add the student to the database
+            cursor.execute(
+                "INSERT INTO students VALUES (?, ?, ?, ?)", (name, age, gpa, course))
+            conn.commit()
 
             # Clear the form fields
             name_entry.delete(0, ctk.END)
             year_entry.delete(0, ctk.END)
-            gender_entry.delete(0, ctk.END)
+
+            # Update the tree view with the new student information
+            update_treeview()
+
+        def update_student():
+            # Get the selected student's information
+            selected = treeview.selection()
+            values = treeview.item(selected)['values']
+            name = values[0]
+            age = year_entry.get()
+            gpa = gender_entry.get()
+            course = course_entry.get()
+            cursor.execute(
+                "UPDATE students SET age=?, gpa=?, course=? WHERE name=?", (age, gpa, course, name))
+            conn.commit()
+
+            # Clear the form fields
+            name_entry.delete(0, ctk.END)
+            year_entry.delete(0, ctk.END)
+
+            update_treeview()
 
         def delete_student():
             # Get the selected student
@@ -121,14 +103,16 @@ def tabmain():
                 # Remove the selected item from the treeview
                 treeview.delete(selected_item)
 
+            update_treeview()
+
         def perform_search():
-            search_query = search_entry.get().lower()
+            search_query = search_entry.get()
 
             # Search through the students' information in the database
             cursor.execute("SELECT * FROM students")
             rows = cursor.fetchall()
             search_results = [row for row in rows if any(
-                search_query in info.lower() for info in row)]
+                search_query in info for info in row)]
 
             # Clear the tree view
             treeview.delete(*treeview.get_children())
@@ -142,54 +126,64 @@ def tabmain():
             search_entry.delete(0, ctk.END)
             update_treeview()
 
+        # Get data from courses tab
+        cursor.execute("SELECT name FROM courses")
+        course_names = [row[0] for row in cursor.fetchall()]
+
+        # Entry for name
         name_entry = ctk.CTkEntry(master=frame1, placeholder_text="Name")
         name_entry.pack(pady=12, padx=10)
 
+        # Entry for year
         year_entry = ctk.CTkEntry(master=frame1, placeholder_text="Year Level")
         year_entry.pack(pady=12, padx=10)
 
+        # Label
         gender_label = ctk.CTkLabel(master=frame1, text="Gender")
-        gender_label.pack(padx=10)
+        gender_label.pack()
 
+        # Entry for gender
         gender_entry = ctk.CTkComboBox(
             master=frame1, values=['Male', 'Female'])
         gender_entry.pack(pady=(0, 12), padx=10)
 
-        course_label = ctk.CTkLabel(master=frame1, text="Course")
-        course_label.pack(padx=10)
+        # Label
+        course_label = ctk.CTkLabel(
+            master=frame1, text="Course")
+        course_label.pack()
 
-        course_entry = ttk.Combobox(frame1)
+        # Entry for Course
+        course_entry = ctk.CTkComboBox(frame1, values=course_names)
         course_entry.pack(pady=(0, 12), padx=10)
 
-        def load_course_names():
-            cursor.execute("SELECT name FROM courses")
-            course_names = [row[0] for row in cursor.fetchall()]
-            course_entry['values'] = course_names
+        # Button to add student
+        add_button = ctk.CTkButton(
+            master=frame1, text="Add Student", command=add_student)
+        add_button.pack(pady=12, padx=10)
 
-        load_course_names()
-
-        submit_button = ctk.CTkButton(
-            master=frame1, text="Add Student", command=submit_form)
-        submit_button.pack(pady=12, padx=10)
-
+        # Button to update student
         update_button = ctk.CTkButton(
-            master=frame1, text="Update Student", command=update_form)
+            master=frame1, text="Update Student", command=update_student)
         update_button.pack(pady=12, padx=10)
 
+        # Button to delete student
+        delete_button = ctk.CTkButton(
+            master=frame1, text="Delete", command=delete_student)
+        delete_button.pack(pady=12, padx=10)
+
+        # Search entry field
         search_entry = ctk.CTkEntry(master=frame3, placeholder_text="Search")
         search_entry.pack(pady=12, padx=10, side="left")
 
+        # Button to activate search
         search_button = ctk.CTkButton(
             master=frame3, text="Search", command=perform_search)
         search_button.pack(pady=12, padx=10, side="left")
 
+        # Button to clear the search field
         clear_button = ctk.CTkButton(
             master=frame3, text="Clear Search", command=clear_search)
         clear_button.pack(pady=12, padx=10, side="left")
-
-        delete_button = ctk.CTkButton(
-            master=frame1, text="Delete", command=delete_student)
-        delete_button.pack(pady=12, padx=10)
 
         def show_selected_row(event):
             selected_row_id = treeview.selection()[0]
@@ -205,6 +199,7 @@ def tabmain():
         treeview.pack(fill="both", expand=True)
 
         treeview["columns"] = ("name", "year", "gender", "course")
+        treeview.heading("#0", text="ID")
         treeview.heading("name", text="Name")
         treeview.heading("year", text="Year Level")
         treeview.heading("gender", text="Gender")
@@ -214,7 +209,7 @@ def tabmain():
         treeview.column("year", width=150)
         treeview.column("gender", width=100)
         treeview.column("course", width=300)
-        treeview.bind('<<TreeviewSelect>>', show_selected_row)
+        treeview.bind('<Double-1>', show_selected_row)
 
         # Fetch and populate tree view with data from the database
         cursor.execute("SELECT * FROM students")
@@ -233,7 +228,7 @@ def tabmain():
         buttonback.pack(side="bottom", pady=10, padx=10)
 
     def tabcourse():
-        root.geometry("350x600")
+        root.geometry("400x600")
         frame.destroy()
         frame1 = ctk.CTkFrame(master=root)
         frame1.pack(pady=20, padx=40, fill="both", expand=True)
@@ -242,7 +237,7 @@ def tabmain():
         label1.pack(pady=(12, 24), padx=10)
 
         # Create a connection to the SQLite database
-        conn = sqlite3.connect("courses.db")
+        conn = sqlite3.connect("studentmanagement.db")
         cursor = conn.cursor()
 
         # Create the courses table if it doesn't exist
@@ -252,6 +247,12 @@ def tabmain():
         conn.commit()
 
         course_list = []  # Initialize the course_list variable
+
+        def update_listbox():
+            course_listbox.delete(0, ctk.END)
+            for course_name, course_code in course_list:
+                course_listbox.insert(
+                    ctk.END, f"{course_name} ({course_code})")
 
         def load_course_list():
             cursor.execute("SELECT name, code FROM courses")
@@ -268,12 +269,7 @@ def tabmain():
                 load_course_list()  # Refresh the course list from the database
                 course_name_entry.delete(0, ctk.END)
                 course_code_entry.delete(0, ctk.END)
-
-        def update_listbox():
-            course_listbox.delete(0, ctk.END)
-            for course_name, course_code in course_list:
-                course_listbox.insert(
-                    ctk.END, f"{course_name} ({course_code})")
+                update_listbox()
 
         def delete_course():
             selected_course = course_listbox.get(ctk.ACTIVE)
@@ -297,9 +293,10 @@ def tabmain():
                 course_name_entry.insert(0, course_name)
                 course_code_entry.insert(0, course_code)
                 delete_course()
+                update_listbox()
 
         course_name_entry = ctk.CTkEntry(
-            frame1, placeholder_text="Course Name")
+            frame1, placeholder_text="Course Name", width=250)
         course_name_entry.pack(pady=12, padx=10)
 
         course_code_entry = ctk.CTkEntry(
@@ -312,7 +309,7 @@ def tabmain():
 
         course_listbox = tk.Listbox(master=frame1)
         course_listbox.pack(pady=12, padx=10)
-        course_listbox.config(width=25)
+        course_listbox.config(width=50)
 
         delete_button = ctk.CTkButton(
             master=frame1, text="Delete Course", command=delete_course
