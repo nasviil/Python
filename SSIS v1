@@ -2,7 +2,6 @@ import customtkinter as ctk
 from tkinter import *
 from tkinter import ttk
 import tkinter as tk
-import tkinter.messagebox
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -89,15 +88,7 @@ def tabmain():
         def update_student():
             # get the selected student's information
             selected = treeview.selection()
-            if not selected:
-                tkinter.messagebox.showerror(
-                    "Error", "Please select a student to update.")
-                return
             values = treeview.item(selected)['values']
-            if not values:
-                tkinter.messagebox.showerror(
-                    "Error", "Please select a student to update.")
-                return
             name = values[0]
             year = year_entry.get()
             gender = gender_entry.get()
