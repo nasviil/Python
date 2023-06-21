@@ -11,14 +11,11 @@ root.title("SSIS")
 root.geometry("400x400")
 root.resizable(False, False)
 
-# -
-
 
 def tabmain():
     root.geometry("400x300")
 
 # ===========================================STUDENT TAB===================================================================
-
     def tabstudent():
         root.geometry("1000x600")
         frame.destroy()
@@ -35,10 +32,7 @@ def tabmain():
         label1.pack(pady=(12, 24), padx=10)
 
 # --------------------------------------------FUNCTIONS--------------------------------------------------------
-
-        # function to update the treeview with new information
         def update_treeview():
-            # clear the tree view
             treeview.delete(*treeview.get_children())
 
             # repopulate the tree view with the updated student information
@@ -160,7 +154,6 @@ def tabmain():
             tabmain()
 
 # ----------------------------------BUTTONS AND ENTRY FIELDS----------------------------------------------------------------
-
         # Entry for name of student
         name_entry = ctk.CTkEntry(master=frame1, placeholder_text="Name")
         name_entry.pack(pady=12, padx=10)
@@ -222,7 +215,6 @@ def tabmain():
         buttonback.pack(side="bottom", pady=10, padx=10)
 
 # ------------------------------------------TREEVIEW----------------------------------------------------------------------
-
         # Function to populate the entries with the selection in the treeview
         def show_selected_row(event):
             selected_row_id = treeview.selection()[0]
@@ -261,18 +253,21 @@ def tabmain():
                                 text=idx, values=student)
 
 # ================================================COURSE TAB=========================================================
-
     def tabcourse():
-        root.geometry("400x600")
+        root.geometry("800x500")
         frame.destroy()
         frame1 = ctk.CTkFrame(master=root)
-        frame1.pack(pady=20, padx=40, fill="both")
+        frame1.pack(pady=20, padx=(20, 1), fill="y", side="left")
+        frame2 = ctk.CTkFrame(master=root)
+        frame2.pack(pady=(1, 20), padx=(1, 20),
+                    fill="both", expand=True, side="bottom")
+        frame3 = ctk.CTkFrame(master=root, width=500, height=50)
+        frame3.pack(pady=(20, 1), padx=(1, 20), fill="x", side="top")
         label1 = ctk.CTkLabel(
             master=frame1, text="Courses", font=("Roboto", 20))
         label1.pack(pady=(12, 24), padx=10)
 
 # ---------------------------------------------FUNCTIONS------------------------------------------------------------
-
         course_list = []
 
         def load_course_list():
@@ -295,77 +290,118 @@ def tabmain():
             if course_name and course_code:
                 course_list.append((course_name, course_code))
                 save_course_list()
-                update_listbox()
-                course_name_entry.delete(0, ctk.END)
-                course_code_entry.delete(0, ctk.END)
+                update_treeview()
+                course_name_entry.delete(0, tk.END)
+                course_code_entry.delete(0, tk.END)
 
-        def update_listbox():
-            course_listbox.delete(0, ctk.END)
+        def update_treeview():
+            course_treeview.delete(*course_treeview.get_children())
             for course_name, course_code in course_list:
-                course_listbox.insert(
-                    ctk.END, f"{course_name} ({course_code})")
+                course_treeview.insert(
+                    "", tk.END, values=(course_name, course_code))
 
         def delete_course():
-            selected_course = course_listbox.get(ctk.ACTIVE)
-            if selected_course:
-                course_name, course_code = selected_course.split(" (")
-                # Remove the closing parenthesis
-                course_code = course_code[:-1]
+            selected_item = course_treeview.focus()
+            if selected_item:
+                item_values = course_treeview.item(selected_item)['values']
+                course_name, course_code = item_values[0], item_values[1]
                 course_list.remove((course_name, course_code))
                 save_course_list()
-                update_listbox()
+                update_treeview()
 
         def edit_course():
-            selected_course = course_listbox.get(ctk.ACTIVE)
-            if selected_course:
-                course_name, course_code = selected_course.split(" (")
-                # Remove the closing parenthesis
-                course_code = course_code[:-1]
-                course_name_entry.delete(0, ctk.END)
-                course_code_entry.delete(0, ctk.END)
+            selected_item = course_treeview.focus()
+            if selected_item:
+                item_values = course_treeview.item(selected_item)['values']
+                course_name, course_code = item_values[0], item_values[1]
+                course_name_entry.delete(0, tk.END)
+                course_code_entry.delete(0, tk.END)
                 course_name_entry.insert(0, course_name)
                 course_code_entry.insert(0, course_code)
                 delete_course()
 
-# ------------------------------------------BUTTONS AND ENTRIES----------------------------------------------------
+        def search_course():
+            search_text = search_entry.get().lower()
+            search_results = []
+            for course_name, course_code in course_list:
+                if search_text in course_name.lower() or search_text in course_code.lower():
+                    search_results.append((course_name, course_code))
+            update_treeview_search(search_results)
 
+        def clear_search():
+            search_entry.delete(0, tk.END)
+            update_treeview()
+
+        def update_treeview_search(results):
+            course_treeview.delete(*course_treeview.get_children())
+            for course_name, course_code in results:
+                course_treeview.insert(
+                    "", tk.END, values=(course_name, course_code))
+
+        def back():
+            frame1.destroy()
+            frame2.destroy()
+            frame3.destroy()
+            tabmain()
+
+# ---------------------------------------TREEVIEW---------------------------------------------------------------------
+        course_treeview = ttk.Treeview(frame2, columns=(
+            "Course Name", "Course Code"), show="headings")
+        course_treeview.pack(pady=12, padx=10, fill="both", expand='TRUE')
+        course_treeview.column("Course Name", width=300)
+        course_treeview.heading("Course Name", text="Course Name")
+        course_treeview.column("Course Code", width=100)
+        course_treeview.heading("Course Code", text="Course Code")
+
+# ------------------------------------------BUTTONS AND ENTRIES----------------------------------------------------
+        # Entry for course name
         course_name_entry = ctk.CTkEntry(
-            frame1, placeholder_text="Course Name", width=250)
+            frame1, width=250, placeholder_text="Course Name")
         course_name_entry.pack(pady=12, padx=10)
 
+        # Entry for course code
         course_code_entry = ctk.CTkEntry(
             frame1, placeholder_text="Course Code")
         course_code_entry.pack(pady=12, padx=10)
 
+        # Button to add course
         add_button = ctk.CTkButton(
             frame1, text="Add Course", command=add_course)
         add_button.pack(pady=12, padx=10)
 
-        course_listbox = tk.Listbox(master=frame1)
-        course_listbox.pack(pady=12, padx=10)
-        course_listbox.config(width=50)
+        # Entry for search
+        search_entry = ctk.CTkEntry(
+            frame3, width=200, placeholder_text="Search")
+        search_entry.pack(pady=12, padx=10, side="left")
 
-        delete_button = ctk.CTkButton(
-            master=frame1, text="Delete Course", command=delete_course
-        )
-        delete_button.pack(pady=12, padx=10)
+        # Button to perform search
+        search_button = ctk.CTkButton(
+            frame3, text="Search", command=search_course)
+        search_button.pack(pady=12, padx=10, side="left")
 
+        # Button to clear search
+        clear_search_button = ctk.CTkButton(
+            frame3, text="Clear Search", command=clear_search)
+        clear_search_button.pack(pady=12, padx=10, side="left")
+
+        # Button to edit course
         edit_button = ctk.CTkButton(
-            master=frame1, text="Edit Course", command=edit_course)
+            frame1, text="Edit Course", command=edit_course)
         edit_button.pack(pady=12, padx=10)
 
+        # Button to delete course
+        delete_button = ctk.CTkButton(
+            frame1, text="Delete Course", command=delete_course)
+        delete_button.pack(pady=12, padx=10)
+
         load_course_list()
-        update_listbox()
+        update_treeview()
 
-        def back():
-            frame1.destroy()
-            tabmain()
-
+        # Button to go back to main tab
         buttonback = ctk.CTkButton(master=frame1, text="Back", command=back)
         buttonback.pack(side="bottom", pady=10, padx=10)
 
 # ======================================MAIN TAB===========================================================
-
     frame = ctk.CTkFrame(master=root)
     frame.pack(pady=20, padx=40, fill="both", expand=True)
 
