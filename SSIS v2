@@ -2,7 +2,6 @@ import customtkinter as ctk
 from tkinter import *
 from tkinter import ttk
 import tkinter as tk
-import tkinter.messagebox
 import sqlite3
 
 ctk.set_appearance_mode("light")
@@ -39,7 +38,7 @@ def tabmain():
         cursor = conn.cursor()
 
         cursor.execute('''CREATE TABLE IF NOT EXISTS students
-                          (name TEXT, age TEXT, gpa TEXT, course TEXT)''')
+                          (name TEXT, year TEXT, gpa TEXT, course TEXT)''')
         conn.commit()
 
 # --------------------------------------------FUNCTIONS---------------------------------------------------------
@@ -59,13 +58,13 @@ def tabmain():
 
         def add_student():
             name = name_entry.get()
-            age = year_entry.get()
+            year = year_entry.get()
             gpa = gender_entry.get()
             course = course_entry.get()
 
             # Add the student to the database
             cursor.execute(
-                "INSERT INTO students VALUES (?, ?, ?, ?)", (name, age, gpa, course))
+                "INSERT INTO students VALUES (?, ?, ?, ?)", (name, year, gpa, course))
             conn.commit()
 
             # Clear the form fields
@@ -80,11 +79,11 @@ def tabmain():
             selected = treeview.selection()
             values = treeview.item(selected)['values']
             name = values[0]
-            age = year_entry.get()
+            year = year_entry.get()
             gpa = gender_entry.get()
             course = course_entry.get()
             cursor.execute(
-                "UPDATE students SET age=?, gpa=?, course=? WHERE name=?", (age, gpa, course, name))
+                "UPDATE students SET year=?, gpa=?, course=? WHERE name=?", (year, gpa, course, name))
             conn.commit()
 
             # Clear the form fields
@@ -136,9 +135,8 @@ def tabmain():
             frame3.destroy()
             tabmain()
 
-#-------------------------------------------BUTTONS AND ENTRIES---------------------------------------------------
-
-        # Get data from courses tab
+# -------------------------------------------BUTTONS AND ENTRIES---------------------------------------------------
+        # get the info from courses
         cursor.execute("SELECT name FROM courses")
         course_names = [row[0] for row in cursor.fetchall()]
 
@@ -200,7 +198,7 @@ def tabmain():
         buttonback = ctk.CTkButton(master=frame1, text="Back", command=back)
         buttonback.pack(side="bottom", pady=10, padx=10)
 
-#----------------------------------------TREEVIEW------------------------------------------------------
+# ----------------------------------------TREEVIEW------------------------------------------------------
 
         def show_selected_row(event):
             selected_row_id = treeview.selection()[0]
