@@ -22,7 +22,7 @@ def tabmain():
         root.geometry("1000x600")
         frame.destroy()
         frame1 = ctk.CTkFrame(master=root)
-        frame1.pack(pady=20, fill="y", side="left")
+        frame1.pack(pady=20, padx=(20, 1), fill="y", side="left")
         frame2 = ctk.CTkFrame(master=root)
         frame2.pack(pady=(1, 20), padx=(1, 20),
                     fill="both", expand=True, side="bottom")
@@ -151,7 +151,7 @@ def tabmain():
         id_entry.pack(pady=(12, 0), padx=10)
 
         # Entry for name
-        name_entry = ctk.CTkEntry(master=frame1, placeholder_text="Name")
+        name_entry = ctk.CTkEntry(master=frame1, placeholder_text="Name", width=200)
         name_entry.pack(pady=(12, 0), padx=10)
 
         # Label
