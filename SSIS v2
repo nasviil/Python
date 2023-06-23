@@ -117,21 +117,19 @@ def tabmain():
             update_treeview()
 
         def perform_search():
-            search_query = search_entry.get()
+            keyword = search_entry.get()
+            if keyword:
+                cursor.execute("SELECT id, name, year, gender, course FROM students")
+                all_results = cursor.fetchall()
 
-            # Search through the students' information in the database
-            cursor.execute("SELECT * FROM students")
-            rows = cursor.fetchall()
-            search_results = [row for row in rows if any(
-                search_query in info for info in row)]
+                search_results = [result for result in all_results if contains_case_sensitive(result, keyword)]
 
-            # Clear the tree view
-            treeview.delete(*treeview.get_children())
+                treeview.delete(*treeview.get_children())
+                for id, name, year, gender, course in search_results:
+                    treeview.insert("", tk.END, values=(id, name, year, gender, course))
 
-            # Display search results in the tree view
-            for id, name, year, gender, course in rows(search_results):
-                treeview.insert(
-                    "", tk.END, values=(id, name, year, gender, course))
+        def contains_case_sensitive(result, keyword):
+            return any(keyword in str(field) for field in result)
 
         def clear_search():
             search_entry.delete(0, ctk.END)
