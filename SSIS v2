@@ -224,10 +224,14 @@ def tabmain():
             year_entry.set(values[2])
             gender_entry.set(values[3])
             course_entry.set(values[4])
-
+        
+        
+        scrollbar = ttk.Scrollbar(frame2)
+        scrollbar.pack(side=RIGHT, fill="y")  
         treeview = ttk.Treeview(frame2, columns=(
-            "ID Number", "Name", "Year Level", "Gender", "Course"))
+            "ID Number", "Name", "Year Level", "Gender", "Course"), yscrollcommand=scrollbar.set)
         treeview.pack(pady=12, padx=10, fill="both", expand=True)
+        scrollbar.config(command=treeview.yview)
         treeview.column("#0", width=0, stretch="no")
         treeview.heading("ID Number", text="ID Number")
         treeview.heading("Name", text="Name")
@@ -241,7 +245,6 @@ def tabmain():
         treeview.column("Course", width=150)
         treeview.bind('<Double-1>', show_selected_row)
         update_treeview()
-
 # ========================================COURSE TAB=============================================================
     def tabcourse():
         root.geometry("800x500")
