@@ -178,7 +178,7 @@ def tabmain():
         course_label.pack()
 
         # Entry for Course
-        course_entry = ctk.CTkComboBox(frame1, values=course_names)
+        course_entry = ctk.CTkComboBox(frame1, values=course_names, width=200)
         course_entry.pack(pady=(0, 12), padx=10)
 
         # Button to add student
