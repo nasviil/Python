@@ -31,7 +31,7 @@ def tabmain():
 
         label1 = ctk.CTkLabel(
             master=frame1, text="Student Information", font=("Roboto", 20))
-        label1.pack(pady=(12, 24), padx=10)
+        label1.pack(pady=(12, 12), padx=10)
 
 # -------------------------------------------DATABASE------------------------------------------------------------
 
@@ -104,7 +104,7 @@ def tabmain():
 
                 # Show confirmation dialog
                 confirm = messagebox.askyesno(
-                    "CONFRIM", "Are you sure you want to delete this student?")
+                    "DELETE", "Are you sure you want to delete this student?")
 
                 if confirm:
                     # User confirmed deletion, delete the student from the database
@@ -305,7 +305,7 @@ def tabmain():
                         "Error", "Course has students enrolled. Cannot delete.")
                 else:
                     confirm = messagebox.askyesno(
-                        "Confirmation", "Course has students enrolled. Are you sure you want to delete?")
+                        "DELETE", "Course has students enrolled. Are you sure you want to delete?")
 
                     if confirm:
                         # User confirmed deletion, delete the course
