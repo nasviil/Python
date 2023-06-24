@@ -30,11 +30,11 @@ def tabstudent():
 # -------------------------------------------DATABASE------------------------------------------------------------
 
     # Connect to the SQLite database
-    conn = sqlite3.connect('studentmanagement.db')
+    conn = sqlite3.connect('students2.db')
     cursor = conn.cursor()
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS students
-                        (id TEXT, name TEXT, year TEXT, gender TEXT, course TEXT)''')
+                        (id TEXT PRIMARY KEY, name TEXT, year TEXT, gender TEXT, course TEXT, FOREIGN KEY(course)REFERENCES courses(code))''')
     conn.commit()
 
 # --------------------------------------------FUNCTIONS---------------------------------------------------------
@@ -58,17 +58,31 @@ def tabstudent():
         gender = gender_entry.get()
         course = course_entry.get()
 
+        # Check if any of the entry fields are blank
+        if not (id and name and year and gender and course):
+            messagebox.showerror("Error", "All fields must be filled.")
+            return
+
+        # Check if the ID already exists in the database
+        cursor.execute("SELECT id FROM students WHERE id = ?", (id,))
+        existing_id = cursor.fetchone()
+
+        if existing_id:
+            messagebox.showerror("Error", "ID already exists. Please choose a different ID.")
+            return
+
         # Add the student to the database
-        cursor.execute(
-            "INSERT INTO students VALUES (?, ?, ?, ?, ?)", (id, name, year, gender, course))
+        cursor.execute("INSERT INTO students VALUES (?, ?, ?, ?, ?)", (id, name, year, gender, course))
         conn.commit()
 
         # Clear the form fields
-        id_entry.delete(0, ctk.END)
-        name_entry.delete(0, ctk.END)
+        id_entry.delete(0, END)
+        name_entry.delete(0, END)
 
         # Update the tree view with the new student information
         update_treeview()
+
+
 
     def update_student():
         # Get the selected student's information
@@ -272,12 +286,12 @@ def tabcourse():
 
 # ----------------------------------------------DATABASE--------------------------------------------------------
     # Create a connection to the SQLite database
-    conn = sqlite3.connect("studentmanagement.db")
+    conn = sqlite3.connect("students2.db")
     cursor = conn.cursor()
 
     # Create the courses table if it doesn't exist
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS courses (name TEXT, code TEXT)"
+        "CREATE TABLE IF NOT EXISTS courses (name TEXT, code TEXT PRIMARY KEY)"
     )
     conn.commit()
 
@@ -293,13 +307,31 @@ def tabcourse():
     def add_course():
         course_name = course_name_entry.get()
         course_code = course_code_entry.get()
-        if course_name and course_code:
-            cursor.execute("INSERT INTO courses VALUES (?, ?)",
-                            (course_name, course_code))
-            conn.commit()
-            update_treeview()
-            course_name_entry.delete(0, tk.END)
-            course_code_entry.delete(0, tk.END)
+
+        # Check if any of the entry fields are blank
+        if not (course_name and course_code):
+            messagebox.showerror("Error", "All fields must be filled.")
+            return
+
+        # Check if the course code already exists in the database
+        cursor.execute("SELECT code FROM courses WHERE code = ?", (course_code,))
+        existing_code = cursor.fetchone()
+
+        if existing_code:
+            messagebox.showerror("Error", "Course code already exists. Please choose a different course code.")
+            return
+
+        # Add the course to the database
+        cursor.execute("INSERT INTO courses VALUES (?, ?)", (course_name, course_code))
+        conn.commit()
+
+        # Clear the form fields
+        course_name_entry.delete(0, tk.END)
+        course_code_entry.delete(0, tk.END)
+
+        # Update the tree view with the new course information
+        update_treeview()
+
 
     def delete_course():
         selected_item = course_treeview.focus()
@@ -377,7 +409,6 @@ def tabcourse():
                 else:
                     messagebox.showerror(
                         "Error", "Both course name and code must be provided.")
-
 
     def back():
         frame1.destroy()
