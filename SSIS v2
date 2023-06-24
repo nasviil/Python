@@ -73,21 +73,30 @@ def tabstudent():
     def update_student():
         # Get the selected student's information
         selected = treeview.selection()
+        if not selected:
+            return
+
         values = treeview.item(selected)['values']
         id = values[0]
         name = name_entry.get()
         year = year_entry.get()
         gender = gender_entry.get()
         course = course_entry.get()
-        cursor.execute(
-            "UPDATE students SET name=?, year=?, gender=?, course=? WHERE id=?", (name, year, gender, course, id))
-        conn.commit()
 
-        # Clear the form fields
-        id_entry.delete(0, ctk.END)
-        name_entry.delete(0, ctk.END)
+        # Prompt for confirmation before updating
+        confirm = messagebox.askyesno("Update", "Are you sure you want to update the student?")
 
-        update_treeview()
+        if confirm:
+            cursor.execute(
+                "UPDATE students SET name=?, year=?, gender=?, course=? WHERE id=?", (name, year, gender, course, id))
+            conn.commit()
+
+            # Clear the form fields
+            id_entry.delete(0, tk.END)
+            name_entry.delete(0, tk.END)
+
+            update_treeview()
+
 
     def delete_student():
         # Get the selected students
@@ -334,19 +343,41 @@ def tabcourse():
         update_treeview()
 
     def edit_course():
-        selected = course_treeview.selection()
-        values = course_treeview.item(selected)['values']
-        name = values[0]
-        code = course_code_entry.get()
-        cursor.execute(
-            "UPDATE courses SET code=? WHERE name=?", (code, name))
-        conn.commit()
+        selected_item = course_treeview.focus()
+        if selected_item:
+            item_values = course_treeview.item(selected_item)['values']
+            course_name, course_code = item_values[0], item_values[1]
 
-        # Clear the form fields
-        course_name_entry.delete(0, ctk.END)
-        course_code_entry.delete(0, ctk.END)
+            # Check if the course has any students enrolled
+            cursor.execute(
+                "SELECT COUNT(*) FROM students WHERE course=?", (course_code,))
+            student_count = cursor.fetchone()[0]
 
-        update_treeview()
+            if student_count > 0:
+                # Course has students, cannot be deleted
+                messagebox.showerror(
+                    "Error", "Course has students enrolled. Cannot update.")
+            else:
+                new_course_name = course_name_entry.get()
+                new_course_code = course_code_entry.get()
+
+                if new_course_name and new_course_code:
+                    confirm = messagebox.askyesno(
+                        "UPDATE", "Are you sure you want to update the course?")
+
+                    if confirm:
+                        # User confirmed update, update the course
+                        cursor.execute(
+                            "UPDATE courses SET name=?, code=? WHERE name=? AND code=?",
+                            (new_course_name, new_course_code, course_name, course_code))
+                        conn.commit()
+                        update_treeview()
+                        course_name_entry.delete(0, tk.END)
+                        course_code_entry.delete(0, tk.END)
+                else:
+                    messagebox.showerror(
+                        "Error", "Both course name and code must be provided.")
+
 
     def back():
         frame1.destroy()
